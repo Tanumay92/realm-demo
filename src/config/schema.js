@@ -1,6 +1,7 @@
 'use strict';
 const userSchema = {
      name : 'User',
+     primaryKey: 'id',
      properties : {
         id : "string",
         first_name : "string",

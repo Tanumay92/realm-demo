@@ -56,17 +56,19 @@ const getAllUsers = async (reqarg, callback) => {
         let req = reqarg || {};
         let users = userSchema.userSchema;
         Realm.open({
-            schema : [users]
-        })
-        .then(async (realm) => {
-            let userData = await realm.objects('User');
-            req.users = userData;
-            return !!callback(null, req);
-        })
-        .catch((err) => {
-            console.log(err);
-            return !!callback({message : err.message,},null)
-        })
+                schema: [users]
+            })
+            .then(async (realm) => {
+                let userData = await realm.objects('User');
+                req.users = userData;
+                return !!callback(null, req);
+            })
+            .catch((err) => {
+                console.log(err);
+                return !!callback({
+                    message: err.message,
+                }, null)
+            })
     } catch (e) {
         console.log(e);
         return !!callback(e.message, null);
@@ -78,21 +80,70 @@ const checkUniqueEmail = (reqarg, callback) => {
         let req = reqarg || {};
         let users = userSchema.userSchema;
         Realm.open({
-            schema : [users]
-        })
-        .then(async (realm) => {
-            let userData = await realm.objects('User').filtered('email = "'+req.email+'"');
-            if(userData.length > 0) {
-                return !!callback({message : "Email id already exists!"},null);
-            } else {
-                return !!callback(null, req);
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            return !!callback({message : err.message,},null)
-        }) 
-    } catch(e) {
+                schema: [users]
+            })
+            .then(async (realm) => {
+                let userData = await realm.objects('User').filtered('email = "' + req.email + '"');
+                if (userData.length > 0) {
+                    return !!callback({
+                        message: "Email id already exists!"
+                    }, null);
+                } else {
+                    return !!callback(null, req);
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                return !!callback({
+                    message: err.message,
+                }, null)
+            })
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
+const updateRequestCheck = (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        if (typeof req === 'object') {
+            return !!callback(null, req);
+        } else {
+            return !!callback({
+                message: "Invalid request!"
+            }, null);
+        }
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
+const updateUserDataInRealm = (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        let users = userSchema.userSchema;
+        let data = req;
+        data.updated_at = moment(Date.now()).format('YYYY-MM-DD').toString();
+        Realm.open({
+                schema: [users]
+            })
+            .then(realm => {
+                realm.write(async () => {
+                    let update = await realm.create('User', data);
+                    return !!callback(null, {
+                        message: "User updated successfully!"
+                    })
+                })
+            })
+            .catch((err) => {
+                console.log(err);
+                return !!callback({
+                    message: err.message
+                }, null);
+            })
+    } catch (e) {
         console.log(e);
         return !!callback(e.message, null);
     }
@@ -102,5 +153,7 @@ module.exports = {
     checkAddUserRequest,
     addUserToRealm,
     getAllUsers,
-    checkUniqueEmail
+    checkUniqueEmail,
+    updateRequestCheck,
+    updateUserDataInRealm
 }

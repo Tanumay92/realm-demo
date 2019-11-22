@@ -13,7 +13,7 @@ const addUser = (req, res) => {
         };
 
         const checkUniqueEmail = (data, callback) => {
-            userModel.checkUniqueEmail(data,callback);
+            userModel.checkUniqueEmail(data, callback);
         }
 
         const addUserToRealm = (data, callback) => {
@@ -65,7 +65,40 @@ const getAllUSer = (req, res) => {
     }
 }
 
+const updateUserById = (req, res) => {
+    let response = {};
+    try {
+        let params = req.body.params || {};
+        params.id = req.params.id;
+
+        const checkRequest = (callback) => {
+            userModel.updateRequestCheck(params, callback);
+        };
+
+        const updateUserDataInRealm = (data,callback) => {
+            userModel.updateUserDataInRealm(data,callback); 
+        }
+
+        async.waterfall([
+            checkRequest,
+            updateUserDataInRealm
+        ],(err,result) => {
+            if(err !== null) {
+                response.error = err;
+            } else {
+                response.result = result;
+            }
+            res.send(response);
+        })
+    } catch (e) {
+        console.log(e);
+        response.error = e.message;
+        res.send(response);
+    }
+}
+
 module.exports = {
     addUser,
-    getAllUSer
+    getAllUSer,
+    updateUserById
 }
