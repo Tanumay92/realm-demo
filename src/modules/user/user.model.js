@@ -89,10 +89,22 @@ const checkUniqueEmail = (reqarg, callback) => {
             .then(async (realm) => {
                 let userData = await realm.objects('User').filtered('email = "' + req.email + '"');
                 if (userData.length > 0) {
-                    return !!callback({
-                        message: "Email id already exists!"
-                    }, null);
+                    if (req.flag === 'add') {
+                        return !!callback({
+                            message: "Email id already exists!"
+                        }, null);
+                    } else {
+                        if (req.id !== userData[0].id) {
+                            return !!callback({
+                                message: "Email id already exists!"
+                            }, null);
+                        } else {
+                            delete req.flag;
+                            return !!callback(null, req);
+                        }
+                    }
                 } else {
+                    delete req.flag;
                     return !!callback(null, req);
                 }
             })

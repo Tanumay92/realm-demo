@@ -13,6 +13,7 @@ const addUser = (req, res) => {
         };
 
         const checkUniqueEmail = (data, callback) => {
+            data.flag = 'add';
             userModel.checkUniqueEmail(data, callback);
         }
 
@@ -74,6 +75,11 @@ const updateUserById = (req, res) => {
         const checkRequest = (callback) => {
             userModel.updateRequestCheck(params, callback);
         };
+
+        const checkUniqueEmail = (data,callback) => {
+            data.flag = 'edit';
+            userModel.checkUniqueEmail(data,callback);
+        }  
 
         const updateUserDataInRealm = (data, callback) => {
             userModel.updateUserDataInRealm(data, callback);
