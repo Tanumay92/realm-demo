@@ -129,11 +129,18 @@ const updateUserDataInRealm = (reqarg, callback) => {
         Realm.open({
                 schema: [users]
             })
-            .then(realm => {
+            .then(async realm => {
+                let userData = await realm.objects('User').filtered('id = "' + req.id + '"')[0];
                 realm.write(async () => {
-                    let update = await realm.create('User', data);
+                    userData.first_name = req.first_name;
+                    userData.last_name = req.last_name;
+                    userData.email = req.email;
+                    userData.phone = req.phone;
+                    userData.username = req.username;
+                    userData.address = req.address;
+                    userData.updated_at = moment(Date.now()).format('YYYY-MM-DD').toString();
                     return !!callback(null, {
-                        message: "User updated successfully!"
+                        message: 'User updated successfully!'
                     })
                 })
             })
@@ -149,11 +156,69 @@ const updateUserDataInRealm = (reqarg, callback) => {
     }
 }
 
+const getUserDetailsById = async (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        let users = userSchema.userSchema;
+        Realm.open({
+                schema: [users]
+            })
+            .then(async realm => {
+                let userData = await realm.objects('User').filtered('id = "' + req.id + '"')[0];
+                req.userDetails = userData;
+                delete req.id;
+                return !!callback(null, req);
+            })
+            .catch((e) => {
+                console.log(e);
+                return !!callback(e.message, null);
+            })
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
+const deleteUserFromRealm = (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        let users = userSchema.userSchema;
+        Realm.open({
+                schema: [users]
+            })
+            .then(async realm => {
+                let userData = await realm.objects('User').filtered('id = "' + req.id + '"');
+                if (userData.length === 0) {
+                    console.log('No data present')
+                    return !!callback({
+                        message: "Error while trying to delete user! Please try again."
+                    })
+                } else {
+                    realm.write(async () => {
+                        let deleteData = await realm.delete(userData);
+                        return !!callback(null, {
+                            message: "User deleted succfully!"
+                        })
+                    })
+                }
+            })
+            .catch((e) => {
+                console.log(e);
+                return !!callback(e.message, null);
+            })
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
 module.exports = {
     checkAddUserRequest,
     addUserToRealm,
     getAllUsers,
     checkUniqueEmail,
     updateRequestCheck,
-    updateUserDataInRealm
+    updateUserDataInRealm,
+    getUserDetailsById,
+    deleteUserFromRealm
 }
