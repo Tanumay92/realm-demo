@@ -8,6 +8,7 @@ var config = require('./src/config/env'),
 app = require('./src/config/express');
 
 // Create server
-app.listen(config.port, function listen() {
+app.listen(config.port, () => {
+  
   console.log('Server listening on port '+config.port+'!');
 });

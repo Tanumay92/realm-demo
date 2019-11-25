@@ -131,25 +131,61 @@ const deleteUserById = (req, res) => {
         params.id = req.params.id;
 
         let checkRequest = (callback) => {
-            if(params.id) {
-                return !!callback(null,params);
+            if (params.id) {
+                return !!callback(null, params);
             } else {
-                return !!callback({message : 'User id missing!'},null);
+                return !!callback({
+                    message: 'User id missing!'
+                }, null);
             }
         };
 
-        let deleteUserFromRealm = (data,callback) => {
-            userModel.deleteUserFromRealm(data,callback);
+        let deleteUserFromRealm = (data, callback) => {
+            userModel.deleteUserFromRealm(data, callback);
         }
 
         async.waterfall([
             checkRequest,
             deleteUserFromRealm
+        ], (err, result) => {
+            if (err !== null) {
+                response.error = err;
+            } else {
+                response.result = result
+            }
+            res.send(response);
+        })
+    } catch (e) {
+        console.log(e);
+        response.error = e.message;
+        res.send(response);
+    }
+}
+
+const login = (req, res) => {
+    let response = {};
+    try {
+        let params = req.body.params;
+        let checkRequest = (callback) => {
+            if(!params.loginKey || !params.password) {
+                return !!callback({message : "Invalid request!"}, null);
+            } else {
+                return !!callback(null,params);
+            }
+        };
+
+        let verifyLoginRequest = (data,callback) => {
+            userModel.verifyLogin(data, callback);
+        }
+
+        async.waterfall([
+            checkRequest,
+            verifyLoginRequest
         ], (err,result) => {
             if(err !== null) {
                 response.error = err;
             } else {
-                response.result = result
+                response.result = result;
             }
             res.send(response);
         })
@@ -165,5 +201,6 @@ module.exports = {
     getAllUSer,
     updateUserById,
     getUserById,
-    deleteUserById
+    deleteUserById,
+    login
 }

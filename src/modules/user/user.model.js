@@ -1,7 +1,9 @@
 const Realm = require('realm');
 const userSchema = require('../../config/schema');
 const moment = require('moment');
+const env = require('../../config/env');
 const unique_id = require('uuid/v1');
+const crypto = require('crypto');
 
 const checkAddUserRequest = (reqarg, callback) => {
     try {
@@ -23,6 +25,8 @@ const addUserToRealm = (reqarg, callback) => {
     try {
         let req = reqarg || {};
         let users = userSchema.userSchema;
+        let password = crypto.createHmac("sha1", env.secret_key).update(req.password).digest('hex');
+        req.password = password;
         let data = req;
         data.id = unique_id();
         data.status = "true";
@@ -212,6 +216,43 @@ const deleteUserFromRealm = (reqarg, callback) => {
     }
 }
 
+const verifyLogin = (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        let users = userSchema.userSchema;
+        Realm.open({
+                schema: [users]
+            })
+            .then(async realm => {
+                let userData = await realm.objects('User').filtered('username = "' + req.loginKey + '" OR email = "' + req.loginKey + '"');
+                if (userData.length === 0) {
+                    return !!callback({
+                        message: "Username/Email is not associated with any account!"
+                    }, null);
+                } else {
+                    let dbPass = userData[0].password;
+                    let password = crypto.createHmac("sha1", env.secret_key).update(req.password).digest('hex');
+                    if (dbPass === password) {
+                        return !!callback(null, {
+                            message: "User logged in successfully!"
+                        })
+                    } else {
+                        return !!callback({
+                            message: "Entered password is not correct!"
+                        }, null);
+                    }
+                }
+            })
+            .catch((e) => {
+                console.log(e);
+                return !!callback(e.message, null);
+            })
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
 module.exports = {
     checkAddUserRequest,
     addUserToRealm,
@@ -220,5 +261,6 @@ module.exports = {
     updateRequestCheck,
     updateUserDataInRealm,
     getUserDetailsById,
-    deleteUserFromRealm
+    deleteUserFromRealm,
+    verifyLogin
 }
