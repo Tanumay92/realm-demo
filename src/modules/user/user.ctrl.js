@@ -202,11 +202,46 @@ const login = (req, res) => {
     }
 }
 
+const changePassword = (req,res) => {
+    let response = {};
+    try {
+        let params = req.body.params;
+        params.id = req.params.id;
+
+        let checkRequest = (callback) => {
+            userModel.changePasswordRequestCheck(params, callback);
+        };
+
+        let changePasswordInDb = (data,callback) => {
+            userModel.changePasswordInDb(data, callback);
+        };
+
+        async.waterfall([
+            checkRequest,
+            changePasswordInDb
+        ], (err, result) => {
+            if(err !== null) {
+                response.error = err;
+            } else {
+                response.result = result;
+            }
+
+            res.send(response);
+        })
+
+    } catch(e) {
+        console.log(e);
+        response.error = e.message;
+        res.send(response);
+    }
+}
+
 module.exports = {
     addUser,
     getAllUSer,
     updateUserById,
     getUserById,
     deleteUserById,
-    login
+    login,
+    changePassword
 }

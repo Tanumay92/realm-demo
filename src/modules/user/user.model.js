@@ -265,6 +265,51 @@ const verifyLogin = (reqarg, callback) => {
     }
 }
 
+const changePasswordRequestCheck = (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        if (!req.id || !req.oldPassword || !req.newPassword) {
+            return !!callback({
+                message: "Invalid Request!"
+            })
+        } else {
+            return !!callback(null, req);
+        }
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
+const changePasswordInDb = (reqarg, callback) => {
+    try {
+        let req = reqarg || {};
+        let users = userSchema.userSchema;
+        Realm.open({
+                schema: [users]
+            })
+            .then(async realm => {
+                let userData = await realm.objects('User').filtered('id = "' + req.id + '"')[0];
+                let oldPass = crypto.createHmac("sha1", env.secret_key).update(req.oldPassword).digest('hex');
+                if (userData.password !== oldPass) {
+                    return !!callback({
+                        message: "Entered old password is not correct!"
+                    }, null);
+                } else {
+                    realm.write(() => {
+                        userData.password = req.newPassword;
+                        return !!callback(null, {
+                            message: "Password changed successfully"
+                        })
+                    })
+                }
+            })
+    } catch (e) {
+        console.log(e);
+        return !!callback(e.message, null);
+    }
+}
+
 module.exports = {
     checkAddUserRequest,
     addUserToRealm,
@@ -274,5 +319,7 @@ module.exports = {
     updateUserDataInRealm,
     getUserDetailsById,
     deleteUserFromRealm,
-    verifyLogin
+    verifyLogin,
+    changePasswordRequestCheck,
+    changePasswordInDb
 }
